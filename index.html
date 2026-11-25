@@ -4,54 +4,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Root Geo Safe</title>
+<title>Root Geo Safe V2</title>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <style>
 body {
+  margin: 0;
+  padding: 25px 12px;
   background: #101820;
   color: white;
   font-family: Arial;
   text-align: center;
-  padding: 35px 15px;
 }
-.box {
-  background: #1c2b36;
-  padding: 25px;
-  border-radius: 15px;
-  max-width: 450px;
+.card {
+  max-width: 600px;
   margin: auto;
+  padding: 22px;
+  background: #1c2b36;
+  border-radius: 16px;
 }
 button {
   background: #00a878;
   color: white;
   border: 0;
-  padding: 14px 22px;
+  padding: 13px 22px;
   border-radius: 8px;
-  font-size: 17px;
+  font-size: 16px;
   cursor: pointer;
 }
-#result { margin-top: 20px; line-height: 2; }
+#map {
+  height: 330px;
+  margin-top: 20px;
+  border-radius: 12px;
+  display: none;
+}
+#result {
+  line-height: 2;
+  margin-top: 15px;
+}
 a { color: #57d9ff; }
 </style>
 </head>
+
 <body>
-<div class="box">
-  <h1>📍 Root Geo Safe</h1>
-  <p>شارك موقعك الجغرافي بنفسك وبموافقتك.</p>
-  <p>لن يتم إرسال موقعك إلى أي خادم.</p>
-  <button onclick="getLocation()">مشاركة موقعي</button>
-  <div id="result"></div>
+<div class="card">
+  <h1>📍 Root Geo Safe V2</h1>
+  <p>شارك موقعك بنفسك وبموافقتك.</p>
+  <p>لا يتم إرسال إحداثياتك إلى خادم.</p>
+
+  <button onclick="getLocation()">
+    تحديد موقعي
+  </button>
+
+  <div id="result" aria-live="polite">
+    اضغط الزر لطلب موقعك.
+  </div>
+
+  <div id="map"></div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
+let map;
+let marker;
+let circle;
+
 function getLocation() {
   const result = document.getElementById("result");
 
   if (!navigator.geolocation) {
-    result.textContent = "المتصفح لا يدعم تحديد الموقع.";
+    result.textContent = "المتصفح لا يدعم GPS.";
     return;
   }
 
-  result.textContent = "في انتظار موافقتك...";
+  result.textContent = "في انتظار إذن الموقع...";
 
   navigator.geolocation.getCurrentPosition(
     function(position) {
@@ -59,18 +88,50 @@ function getLocation() {
       const lon = position.coords.longitude;
       const accuracy = position.coords.accuracy;
 
+      document.getElementById("map").style.display = "block";
+
+      if (!map) {
+        map = L.map("map").setView([lat, lon], 16);
+
+        L.tileLayer(
+          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          {
+            attribution: "&copy; OpenStreetMap contributors"
+          }
+        ).addTo(map);
+
+        marker = L.marker([lat, lon]).addTo(map);
+        circle = L.circle([lat, lon], {
+          radius: accuracy
+        }).addTo(map);
+      } else {
+        marker.setLatLng([lat, lon]);
+        circle.setLatLng([lat, lon]);
+        circle.setRadius(accuracy);
+        map.setView([lat, lon], 16);
+      }
+
+      setTimeout(() => map.invalidateSize(), 100);
+
       result.innerHTML =
-        "تم تحديد موقعك بنجاح!<br>" +
-        "خط العرض: " + lat + "<br>" +
-        "خط الطول: " + lon + "<br>" +
-        "دقة الموقع التقريبية: " + accuracy + " متر<br>" +
-        '<a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat='
-        + lat + '&mlon=' + lon + '">عرض موقعي على الخريطة</a>';
+        "<b>تم تحديد موقعك بنجاح</b><br>" +
+        "Latitude: " + lat.toFixed(6) + "<br>" +
+        "Longitude: " + lon.toFixed(6) + "<br>" +
+        "Accuracy: " + Math.round(accuracy) + " متر<br>" +
+        '<a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=' +
+        lat + '&mlon=' + lon + '">عرض الخريطة</a>';
     },
+
     function(error) {
-      result.textContent = "لم يتم الحصول على الموقع: " + error.message;
+      result.textContent =
+        "تعذر تحديد الموقع: " + error.message;
     },
-    { enableHighAccuracy: true, timeout: 15000 }
+
+    {
+      enableHighAccuracy: true,
+      timeout: 20000,
+      maximumAge: 0
+    }
   );
 }
 </script>
