@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Root Geo Safe</title>
+<style>
+body {
+  background: #101820;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+  padding: 35px 15px;
+}
+.box {
+  background: #1c2b36;
+  padding: 25px;
+  border-radius: 15px;
+  max-width: 450px;
+  margin: auto;
+}
+button {
+  background: #00a878;
+  color: white;
+  border: 0;
+  padding: 14px 22px;
+  border-radius: 8px;
+  font-size: 17px;
+  cursor: pointer;
+}
+#result { margin-top: 20px; line-height: 2; }
+a { color: #57d9ff; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>📍 Root Geo Safe</h1>
+  <p>شارك موقعك الجغرافي بنفسك وبموافقتك.</p>
+  <p>لن يتم إرسال موقعك إلى أي خادم.</p>
+  <button onclick="getLocation()">مشاركة موقعي</button>
+  <div id="result"></div>
+</div>
+
+<script>
+function getLocation() {
+  const result = document.getElementById("result");
+
+  if (!navigator.geolocation) {
+    result.textContent = "المتصفح لا يدعم تحديد الموقع.";
+    return;
+  }
+
+  result.textContent = "في انتظار موافقتك...";
+
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+
+      result.innerHTML =
+        "تم تحديد موقعك بنجاح!<br>" +
+        "خط العرض: " + lat + "<br>" +
+        "خط الطول: " + lon + "<br>" +
+        "دقة الموقع التقريبية: " + accuracy + " متر<br>" +
+        '<a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat='
+        + lat + '&mlon=' + lon + '">عرض موقعي على الخريطة</a>';
+    },
+    function(error) {
+      result.textContent = "لم يتم الحصول على الموقع: " + error.message;
+    },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
+}
+</script>
+</body>
+</html>
